@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg: #ffffff;
+      --bg: #fff;
       --card: #f9fafb;
       --text: #111827;
       --border: #e5e7eb;
@@ -76,10 +76,33 @@
       padding: 10px;
       text-align: center;
     }
-    .auth-box {
-      max-width: 400px;
-      margin: 50px auto;
+
+    /* 登录注册页面 */
+    .page {
+      max-width: 420px;
+      margin: 60px auto;
+      display: none;
     }
+    .page.active {
+      display: block;
+    }
+    .pwd-box {
+      position: relative;
+    }
+    .toggle-pwd {
+      position: absolute;
+      right: 10px;
+      top: 12px;
+      cursor: pointer;
+      color: #666;
+    }
+    .link {
+      color: var(--blue);
+      cursor: pointer;
+      text-align: center;
+      margin-top: 10px;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -91,6 +114,7 @@
 </head>
 
 <body>
+
 <div class="container">
   <header>
     <h2>工作任务跟踪记录器</h2>
@@ -100,17 +124,54 @@
     </div>
   </header>
 
-  <!-- 登录注册 -->
-  <div id="authPage" class="card auth-box">
-    <h3>登录</h3>
+  <!-- 登录页面 -->
+  <div id="loginPage" class="page card active">
+    <h2>登录</h2>
     <input id="loginUser" placeholder="用户名">
-    <input id="loginPwd" type="password" placeholder="密码">
+    <div class="pwd-box">
+      <input id="loginPwd" type="password" placeholder="密码">
+      <span class="toggle-pwd" onclick="togglePwd('loginPwd')">👁️</span>
+    </div>
     <button class="btn" onclick="login()">登录</button>
-    <br><br>
-    <h3>注册</h3>
-    <input id="regUser" placeholder="设置用户名">
-    <input id="regPwd" type="password" placeholder="设置密码">
+    <div class="link" onclick="goPage('findPage')">忘记密码？</div>
+    <div class="link" onclick="goPage('regPage')">去注册账号</div>
+  </div>
+
+  <!-- 注册页面 -->
+  <div id="regPage" class="page card">
+    <h2>注册</h2>
+    <input id="regUser" placeholder="用户名">
+    <div class="pwd-box">
+      <input id="regPwd" type="password" placeholder="密码">
+      <span class="toggle-pwd" onclick="togglePwd('regPwd')">👁️</span>
+    </div>
+    <div class="pwd-box">
+      <input id="regPwd2" type="password" placeholder="确认密码">
+      <span class="toggle-pwd" onclick="togglePwd('regPwd2')">👁️</span>
+    </div>
+    <select id="question">
+      <option>你的生日是？</option>
+      <option>你的小学名称是？</option>
+      <option>你的母亲姓名是？</option>
+    </select>
+    <input id="answer" placeholder="答案">
     <button class="btn" onclick="register()">注册</button>
+    <div class="link" onclick="goPage('loginPage')">返回登录</div>
+  </div>
+
+  <!-- 找回密码 -->
+  <div id="findPage" class="page card">
+    <h2>找回密码</h2>
+    <input id="findUser" placeholder="用户名">
+    <select id="findQuestion">
+      <option>你的生日是？</option>
+      <option>你的小学名称是？</option>
+      <option>你的母亲姓名是？</option>
+    </select>
+    <input id="findAnswer" placeholder="答案">
+    <button class="btn" onclick="findPwd()">验证并显示密码</button>
+    <div id="showPwd" class="link" style="color:red;"></div>
+    <div class="link" onclick="goPage('loginPage')">返回登录</div>
   </div>
 
   <!-- 主功能 -->
@@ -154,9 +215,22 @@
 
 <script>
   let user = null;
-  let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
   let users = JSON.parse(localStorage.getItem('users')) || [];
+  let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
   let chartInstance = null;
+
+  // 切换页面
+  function goPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    showPwd.innerText = '';
+  }
+
+  // 密码显示隐藏
+  function togglePwd(id) {
+    let i = document.getElementById(id);
+    i.type = i.type === 'password' ? 'text' : 'password';
+  }
 
   // 切换主题
   toggleTheme.onclick = () => document.body.classList.toggle('dark');
@@ -165,34 +239,51 @@
   function register() {
     let u = regUser.value.trim();
     let p = regPwd.value.trim();
-    if (!u || !p) return alert('请填写完整信息');
+    let p2 = regPwd2.value.trim();
+    let q = question.value;
+    let a = answer.value.trim();
+
+    if (!u || !p || !p2 || !a) return alert('请填完所有项');
+    if (p !== p2) return alert('两次密码不一致');
     if (users.find(x => x.user === u)) return alert('用户名已存在');
-    users.push({ user: u, pwd: p });
+
+    users.push({ user: u, pwd: p, question: q, answer: a });
     localStorage.setItem('users', JSON.stringify(users));
-    alert('注册成功！请登录');
+    alert('注册成功！');
+    goPage('loginPage');
   }
 
   // 登录
   function login() {
     let u = loginUser.value.trim();
     let p = loginPwd.value.trim();
-    let findUser = users.find(item => item.user === u && item.pwd === p);
-    if (!findUser) return alert('账号或密码错误');
-    
+    let fu = users.find(x => x.user === u && x.pwd === p);
+    if (!fu) return alert('账号或密码错误');
+
     user = u;
-    authPage.classList.add('hidden');
+    loginPage.classList.add('hidden');
+    regPage.classList.add('hidden');
+    findPage.classList.add('hidden');
     mainPage.classList.remove('hidden');
     logoutBtn.classList.remove('hidden');
     renderList();
     drawChart();
   }
 
-  // 退出登录
-  logoutBtn.onclick = () => {
-    location.reload();
-  };
+  // 找回密码
+  function findPwd() {
+    let u = findUser.value.trim();
+    let q = findQuestion.value;
+    let a = findAnswer.value.trim();
+    let fu = users.find(x => x.user === u && x.question === q && x.answer === a);
+    if (!fu) return alert('信息不匹配');
+    showPwd.innerText = '你的密码：' + fu.pwd;
+  }
 
-  // 新增任务
+  // 退出
+  logoutBtn.onclick = () => location.reload();
+
+  // 添加任务
   function addTask() {
     let task = {
       no: no.value,
@@ -201,7 +292,7 @@
       end: end.value,
       user: user.value,
       status: status.value,
-      month: (new Date()).toISOString().slice(0,7)
+      month: new Date().toISOString().slice(0,7)
     };
     tasks.push(task);
     localStorage.setItem('tasks', JSON.stringify(tasks));
@@ -228,30 +319,26 @@
   }
 
   // 删除
-  function del(index) {
+  function del(idx) {
     if (!confirm('确定删除？')) return;
-    tasks.splice(index, 1);
+    tasks.splice(idx, 1);
     localStorage.setItem('tasks', JSON.stringify(tasks));
     renderList();
     drawChart();
   }
 
-  // 统计图
+  // 图表
   function drawChart() {
     let m = month.value || new Date().toISOString().slice(0,7);
     let list = tasks.filter(t => t.month === m);
-    let res = { 进行中: 0, 已完成: 0, 待反馈: 0 };
+    let res = { 进行中:0, 已完成:0, 待反馈:0 };
     list.forEach(t => res[t.status]++);
-    
     if (chartInstance) chartInstance.destroy();
     chartInstance = new Chart(chart, {
       type: 'bar',
       data: {
-        labels: ['进行中', '已完成', '待反馈'],
-        datasets: [{
-          data: [res.进行中, res.已完成, res.待反馈],
-          backgroundColor: ['#f59e0b', '#10b981', '#3b82f6']
-        }]
+        labels: ['进行中','已完成','待反馈'],
+        datasets: [{ data: [res.进行中, res.已完成, res.待反馈], backgroundColor: ['#f59e0b','#10b981','#3b82f6'] }]
       }
     });
   }
