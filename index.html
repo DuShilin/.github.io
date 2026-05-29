@@ -7,83 +7,155 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg: #fff;
-      --card: #f9fafb;
-      --text: #111827;
-      --border: #e5e7eb;
-      --blue: #2563eb;
-      --gray: #9ca3af;
+      --primary: #409eff;
+      --primary-light: #ecf5ff;
+      --success: #67c23a;
+      --warning: #e6a23c;
+      --info: #909399;
+      --bg: #f7f8fa;
+      --card: #ffffff;
+      --text: #303133;
+      --text-light: #606266;
+      --border: #ebeef5;
+      --shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
+      --radius: 12px;
     }
     .dark {
-      --bg: #111827;
-      --card: #1f2937;
-      --text: #f9fafb;
-      --border: #374151;
+      --primary: #66b1ff;
+      --primary-light: #1f2d3d;
+      --bg: #1a1d23;
+      --card: #252a34;
+      --text: #e5eaf3;
+      --text-light: #a3a6ad;
+      --border: #3a3f48;
+      --shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.2);
     }
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: system-ui, sans-serif;
+      font-family: "Microsoft Yahei", system-ui, sans-serif;
     }
     body {
-      background: var(--bg);
+      background-color: var(--bg);
       color: var(--text);
-      padding: 20px;
-      transition: 0.3s;
+      padding: 24px;
+      transition: all 0.3s ease;
+      line-height: 1.6;
     }
     .container {
-      max-width: 1000px;
-      margin: auto;
+      max-width: 1100px;
+      margin: 0 auto;
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-size: 20px;
+      cursor: pointer;
+      overflow: hidden;
+      border: 2px solid var(--primary);
+    }
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    header h2 {
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 24px;
     }
     .btn {
-      padding: 8px 14px;
-      background: var(--blue);
-      color: white;
+      padding: 9px 18px;
+      background-color: var(--primary);
+      color: #fff;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      margin-left: 6px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(64, 158, 255, 0.3);
     }
-    .btn:disabled {
-      background: var(--gray);
-      cursor: not-allowed;
+    .btn:hover {
+      background-color: #66b1ff;
+      transform: translateY(-2px);
     }
     .card {
-      background: var(--card);
+      background-color: var(--card);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 16px;
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
     }
-    input, select, button {
-      width: 100%;
-      padding: 8px;
-      margin: 6px 0;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--bg);
+    .card:hover {
+      box-shadow: 0 4px 18px 0 rgba(0, 0, 0, 0.1);
+    }
+    .card h3 {
+      margin-bottom: 16px;
       color: var(--text);
+      font-size: 18px;
+      border-left: 4px solid var(--primary);
+      padding-left: 10px;
+    }
+    input, select {
+      width: 100%;
+      padding: 11px 14px;
+      margin: 8px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background-color: var(--card);
+      color: var(--text);
+      font-size: 14px;
+      transition: border 0.2s ease;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 12px;
+      font-size: 14px;
     }
     th, td {
       border: 1px solid var(--border);
-      padding: 10px;
+      padding: 12px 8px;
       text-align: center;
     }
+    th {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      font-weight: 500;
+    }
+    tr:hover {
+      background-color: var(--primary-light);
+    }
     .page {
-      max-width: 420px;
-      margin: 60px auto;
+      max-width: 440px;
+      margin: 70px auto;
       display: none;
     }
     .page.active {
@@ -94,41 +166,60 @@
     }
     .toggle-pwd {
       position: absolute;
-      right: 10px;
-      top: 12px;
+      right: 14px;
+      top: 16px;
       cursor: pointer;
-      color: #666;
+      color: var(--info);
+      font-size: 16px;
+      user-select: none;
     }
     .link {
-      color: var(--blue);
+      color: var(--primary);
       cursor: pointer;
       text-align: center;
-      margin-top: 10px;
+      margin-top: 14px;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+    .link:hover {
+      color: #66b1ff;
+      text-decoration: underline;
     }
     .tips {
       font-size: 12px;
-      color: #999;
-      margin: 4px 0;
-    }
-    .code-row {
-      display: flex;
-      gap: 8px;
-    }
-    .code-row input {
-      flex: 1;
-      margin: 6px 0;
-    }
-    .code-row button {
-      width: 120px;
-      flex-shrink: 0;
-      margin: 6px 0;
+      color: var(--text-light);
+      margin: 4px 0 8px;
     }
     .hidden {
       display: none !important;
     }
     .chart-container {
-      height: 300px;
-      margin: 20px 0;
+      height: 320px;
+      margin: 20px 0 10px;
+    }
+    /* 个人中心头像上传 */
+    .center-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-size: 40px;
+      margin: 0 auto 16px;
+      overflow: hidden;
+      border: 3px solid var(--primary);
+      cursor: pointer;
+    }
+    .center-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #avatarInput {
+      display: none;
     }
   </style>
 </head>
@@ -136,7 +227,12 @@
 <body>
 <div class="container">
   <header>
-    <h2>工作任务跟踪记录器</h2>
+    <div class="header-left">
+      <div class="avatar" id="headerAvatar" onclick="goPage('profilePage')">
+        👤
+      </div>
+      <h2>工作任务跟踪记录器</h2>
+    </div>
     <div>
       <button id="toggleTheme" class="btn">切换主题</button>
       <button id="logoutBtn" class="btn hidden">退出登录</button>
@@ -145,25 +241,21 @@
 
   <!-- 登录页面 -->
   <div id="loginPage" class="page card active">
-    <h2>账号登录</h2>
-    <input id="loginPhone" placeholder="请输入手机号" maxlength="11">
+    <h2 style="text-align:center;margin-bottom:24px;color:var(--primary);">账号登录</h2>
+    <input id="loginPhone" placeholder="请输入注册手机号" maxlength="11">
     <div class="pwd-box">
-      <input id="loginPwd" type="password" placeholder="请输入密码">
+      <input id="loginPwd" type="password" placeholder="请输入登录密码">
       <span class="toggle-pwd" onclick="togglePwd('loginPwd')">👁️</span>
     </div>
-    <button class="btn" onclick="login()">立即登录</button>
+    <button class="btn" style="width:100%;margin-top:10px;" onclick="login()">立即登录</button>
     <div class="link" onclick="goPage('findPage')">忘记密码？</div>
-    <div class="link" onclick="goPage('regPage')">没有账号，去注册</div>
+    <div class="link" onclick="goPage('regPage')">没有账号，前往注册</div>
   </div>
 
-  <!-- 注册页面（含手机验证码） -->
+  <!-- 注册页面 -->
   <div id="regPage" class="page card">
-    <h2>账号注册</h2>
-    <input id="regPhone" placeholder="请输入手机号" maxlength="11">
-    <div class="code-row">
-      <input id="regCode" placeholder="请输入验证码" maxlength="6">
-      <button id="getCodeBtn" onclick="getVerifyCode()">获取验证码</button>
-    </div>
+    <h2 style="text-align:center;margin-bottom:24px;color:var(--primary);">新用户注册</h2>
+    <input id="regPhone" placeholder="请设置登录手机号" maxlength="11">
     <div class="pwd-box">
       <input id="regPwd" type="password" placeholder="设置登录密码">
       <span class="toggle-pwd" onclick="togglePwd('regPwd')">👁️</span>
@@ -178,13 +270,13 @@
       <option>你的母亲姓名是？</option>
     </select>
     <input id="answer" placeholder="请输入密保答案">
-    <button class="btn" onclick="register()">完成注册</button>
+    <button class="btn" style="width:100%;margin-top:10px;" onclick="register()">完成注册</button>
     <div class="link" onclick="goPage('loginPage')">已有账号，返回登录</div>
   </div>
 
   <!-- 找回密码 -->
   <div id="findPage" class="page card">
-    <h2>找回密码</h2>
+    <h2 style="text-align:center;margin-bottom:24px;color:var(--primary);">找回密码</h2>
     <input id="findPhone" placeholder="请输入注册手机号" maxlength="11">
     <select id="findQuestion">
       <option>你的生日是？</option>
@@ -192,9 +284,24 @@
       <option>你的母亲姓名是？</option>
     </select>
     <input id="findAnswer" placeholder="请输入密保答案">
-    <button class="btn" onclick="findPwd()">验证找回密码</button>
-    <div id="showPwd" class="link" style="color:red;"></div>
+    <button class="btn" style="width:100%;margin-top:10px;" onclick="findPwd()">验证找回密码</button>
+    <div id="showPwd" class="link" style="color:#f56c6c;font-weight:500;"></div>
     <div class="link" onclick="goPage('loginPage')">返回登录</div>
+  </div>
+
+  <!-- 个人中心（头像+修改手机号） -->
+  <div id="profilePage" class="page card">
+    <h2 style="text-align:center;margin-bottom:24px;color:var(--primary);">个人中心</h2>
+    <div class="center-avatar" id="profileAvatar" onclick="document.getElementById('avatarInput').click()">
+      👤
+    </div>
+    <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(event)">
+    <p style="text-align:center;color:var(--text-light);font-size:12px;margin-bottom:16px;">点击头像更换</p>
+
+    <input id="curPhone" readonly style="background:var(--primary-light);" placeholder="当前手机号">
+    <input id="newPhone" placeholder="新手机号" maxlength="11">
+    <button class="btn" style="width:100%;margin-top:10px;" onclick="changePhone()">保存修改</button>
+    <div class="link" onclick="goPage('mainPage')">返回首页</div>
   </div>
 
   <!-- 主功能页面 -->
@@ -211,7 +318,7 @@
         <option>已完成</option>
         <option>待反馈</option>
       </select>
-      <button class="btn" onclick="addTask()">保存任务</button>
+      <button class="btn" style="width:100%;margin-top:10px;" onclick="addTask()">保存任务</button>
     </div>
 
     <div class="card">
@@ -219,7 +326,13 @@
       <table>
         <thead>
           <tr>
-            <th>序号</th><th>任务名称</th><th>开始时间</th><th>截至时间</th><th>对接人</th><th>任务状态</th><th>操作</th>
+            <th>序号</th>
+            <th>任务名称</th>
+            <th>开始时间</th>
+            <th>截至时间</th>
+            <th>对接人</th>
+            <th>任务状态</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody id="taskList"></tbody>
@@ -241,8 +354,6 @@
   let users = JSON.parse(localStorage.getItem('users')) || [];
   let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
   let chartInstance = null;
-  let timer = null;
-  let realCode = ""; // 存储模拟验证码
 
   // 手机号格式校验
   function checkPhone(phone) {
@@ -254,10 +365,22 @@
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     document.getElementById('showPwd').innerText = '';
-    // 重置验证码倒计时
-    clearInterval(timer);
-    getCodeBtn.innerText = "获取验证码";
-    getCodeBtn.disabled = false;
+
+    // 个人中心：回填当前手机号
+    if (id === 'profilePage' && user) {
+      const u = users.find(x => x.phone === user);
+      if (u) {
+        curPhone.value = u.phone;
+        // 回填头像
+        if (u.avatar) {
+          profileAvatar.innerHTML = `<img src="${u.avatar}">`;
+          headerAvatar.innerHTML = `<img src="${u.avatar}">`;
+        } else {
+          profileAvatar.innerText = '👤';
+          headerAvatar.innerText = '👤';
+        }
+      }
+    }
   }
 
   // 密码显示/隐藏切换
@@ -266,43 +389,14 @@
     input.type = input.type === 'password' ? 'text' : 'password';
   }
 
-  // 切换深浅主题
+  // 深浅主题切换
   document.getElementById('toggleTheme').onclick = () => {
     document.body.classList.toggle('dark');
   };
 
-  // 获取手机验证码（模拟6位数字验证码 + 60秒倒计时）
-  function getVerifyCode() {
-    const phone = regPhone.value.trim();
-    if (!checkPhone(phone)) {
-      alert('请输入正确的11位手机号');
-      return;
-    }
-    // 生成6位随机数字验证码
-    realCode = Math.floor(100000 + Math.random() * 900000).toString();
-    alert(`【模拟验证码】您的验证码是：${realCode}，有效期5分钟`);
-
-    // 60秒倒计时
-    let count = 60;
-    const btn = document.getElementById('getCodeBtn');
-    btn.disabled = true;
-    btn.innerText = `${count}秒后重发`;
-
-    timer = setInterval(() => {
-      count--;
-      btn.innerText = `${count}秒后重发`;
-      if (count <= 0) {
-        clearInterval(timer);
-        btn.innerText = "获取验证码";
-        btn.disabled = false;
-      }
-    }, 1000);
-  }
-
-  // 注册（增加验证码校验）
+  // 注册
   function register() {
     const phone = regPhone.value.trim();
-    const code = regCode.value.trim();
     const pwd = regPwd.value.trim();
     const pwd2 = regPwd2.value.trim();
     const q = question.value;
@@ -310,12 +404,6 @@
 
     if (!checkPhone(phone)) {
       return alert('请输入正确的11位手机号');
-    }
-    if (!code) {
-      return alert('请填写手机验证码');
-    }
-    if (code !== realCode) {
-      return alert('验证码错误，请重新获取');
     }
     if (!pwd || !pwd2 || !a) {
       return alert('请填写完整所有信息');
@@ -331,10 +419,10 @@
       phone: phone,
       pwd: pwd,
       question: q,
-      answer: a
+      answer: a,
+      avatar: ''
     });
     localStorage.setItem('users', JSON.stringify(users));
-    clearInterval(timer);
     alert('注册成功！请前往登录');
     goPage('loginPage');
   }
@@ -356,11 +444,19 @@
     document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
     mainPage.classList.remove('hidden');
     logoutBtn.classList.remove('hidden');
+
+    // 登录后显示头像
+    if (findUser.avatar) {
+      headerAvatar.innerHTML = `<img src="${findUser.avatar}">`;
+    } else {
+      headerAvatar.innerText = '👤';
+    }
+
     renderList();
     drawChart();
   }
 
-  // 找回密码（手机号 + 密保问题双重验证）
+  // 找回密码
   function findPwd() {
     const phone = findPhone.value.trim();
     const q = findQuestion.value;
@@ -373,9 +469,8 @@
       item.phone === phone && item.question === q && item.answer === a
     );
     if (!findUser) {
-      return alert('手机号或密保答案不正确，验证失败');
       showPwd.innerText = '';
-      return;
+      return alert('手机号或密保答案不正确，验证失败');
     }
     showPwd.innerText = `验证通过，您的密码：${findUser.pwd}`;
   }
@@ -415,7 +510,7 @@
         <td>${t.end || ''}</td>
         <td>${t.user}</td>
         <td>${t.status}</td>
-        <td><button onclick="del(${idx})">删除</button></td>
+        <td><button class="btn" style="padding:5px 10px;font-size:12px;" onclick="del(${idx})">删除</button></td>
       </tr>`;
     });
   }
@@ -443,11 +538,62 @@
       data: {
         labels: ['进行中', '已完成', '待反馈'],
         datasets: [{
+          label: '任务数量',
           data: [res.进行中, res.已完成, res.待反馈],
-          backgroundColor: ['#f59e0b', '#10b981', '#3b82f6']
+          backgroundColor: ['#e6a23c', '#67c23a', '#409eff'],
+          borderRadius: 6
         }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
       }
     });
+  }
+
+  // 头像上传预览
+  function uploadAvatar(e) {
+    const file = e.target.files[0];
+    if (!file || !file.type.startsWith('image/')) {
+      return alert('请选择图片文件');
+    }
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+      const base64 = ev.target.result;
+      profileAvatar.innerHTML = `<img src="${base64}">`;
+      headerAvatar.innerHTML = `<img src="${base64}">`;
+      // 保存到用户数据
+      const u = users.find(x => x.phone === user);
+      if (u) {
+        u.avatar = base64;
+        localStorage.setItem('users', JSON.stringify(users));
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // 修改手机号
+  function changePhone() {
+    const oldPhone = user;
+    const newPhone = newPhone.value.trim();
+    if (!checkPhone(newPhone)) {
+      return alert('请输入正确的11位新手机号');
+    }
+    if (newPhone === oldPhone) {
+      return alert('新手机号不能和当前手机号相同');
+    }
+    if (users.find(x => x.phone === newPhone)) {
+      return alert('该手机号已被其他账号使用');
+    }
+    // 更新
+    const u = users.find(x => x.phone === oldPhone);
+    if (u) {
+      u.phone = newPhone;
+      user = newPhone;
+      localStorage.setItem('users', JSON.stringify(users));
+      alert('手机号修改成功！');
+      goPage('profilePage');
+    }
   }
 </script>
 </body>
