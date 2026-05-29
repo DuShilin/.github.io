@@ -1,63 +1,253 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的线上网页</title>
-    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Microsoft YaHei", sans-serif;
-        }
-        body {
-            background: #f5f7fa;
-        }
-        .header {
-            background: #2468eb;
-            color: #fff;
-            text-align: center;
-            padding: 60px 20px;
-        }
-        .header h1 {
-            font-size: 36px;
-            margin-bottom: 15px;
-        }
-        .content {
-            max-width: 900px;
-            margin: 50px auto;
-            padding: 40px;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-        }
-        .content p {
-            line-height: 1.8;
-            color: #555;
-            font-size: 16px;
-        }
-        footer {
-            text-align: center;
-            padding: 30px;
-            color: #888;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>工作任务跟踪记录器</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --card: #f9fafb;
+      --text: #111827;
+      --border: #e5e7eb;
+      --blue: #2563eb;
+    }
+    .dark {
+      --bg: #111827;
+      --card: #1f2937;
+      --text: #f9fafb;
+      --border: #374151;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, sans-serif;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      transition: 0.3s;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .btn {
+      padding: 8px 14px;
+      background: var(--blue);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      text-align: center;
+    }
+    .auth-box {
+      max-width: 400px;
+      margin: 50px auto;
+    }
+    .hidden {
+      display: none;
+    }
+    .chart-container {
+      height: 300px;
+      margin: 20px 0;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="header">
-        <h1>欢迎访问我的线上网页</h1>
-        <p>部署完成，输入网址即可访问</p>
+<div class="container">
+  <header>
+    <h2>工作任务跟踪记录器</h2>
+    <div>
+      <button id="toggleTheme" class="btn">切换主题</button>
+      <button id="logoutBtn" class="btn hidden">退出登录</button>
+    </div>
+  </header>
+
+  <!-- 登录注册 -->
+  <div id="authPage" class="card auth-box">
+    <h3>登录</h3>
+    <input id="loginUser" placeholder="用户名">
+    <input id="loginPwd" type="password" placeholder="密码">
+    <button class="btn" onclick="login()">登录</button>
+    <br><br>
+    <h3>注册</h3>
+    <input id="regUser" placeholder="设置用户名">
+    <input id="regPwd" type="password" placeholder="设置密码">
+    <button class="btn" onclick="register()">注册</button>
+  </div>
+
+  <!-- 主功能 -->
+  <div id="mainPage" class="hidden">
+    <div class="card">
+      <h3>新增任务</h3>
+      <input id="no" placeholder="任务序号">
+      <input id="name" placeholder="任务名称">
+      <input id="start" type="datetime-local">
+      <input id="end" type="datetime-local">
+      <input id="user" placeholder="对接人">
+      <select id="status">
+        <option>进行中</option>
+        <option>已完成</option>
+        <option>待反馈</option>
+      </select>
+      <button class="btn" onclick="addTask()">保存任务</button>
     </div>
 
-    <div class="content">
-        <h2>页面介绍</h2>
-        <p>这是部署在 GitHub Pages 的免费网页，所有资源联网加载，手机、电脑都能正常打开。</p>
+    <div class="card">
+      <h3>任务列表</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>序号</th><th>任务名称</th><th>开始</th><th>截至</th><th>对接人</th><th>状态</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="taskList"></tbody>
+      </table>
     </div>
 
-    <footer>
-        © 2026 免费静态网页
-    </footer>
+    <div class="card">
+      <h3>月度任务统计</h3>
+      <input type="month" id="month" onchange="drawChart()">
+      <div class="chart-container">
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let user = null;
+  let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+  let users = JSON.parse(localStorage.getItem('users')) || [];
+  let chartInstance = null;
+
+  // 切换主题
+  toggleTheme.onclick = () => document.body.classList.toggle('dark');
+
+  // 注册
+  function register() {
+    let u = regUser.value, p = regPwd.value;
+    if (!u||!p) return alert('请填写完整');
+    if (users.find(x=>x.user===u)) return alert('用户名已存在');
+    users.push({user:pwd:p});
+    localStorage.setItem('users', JSON.stringify(users));
+    alert('注册成功');
+  }
+
+  // 登录
+  function login() {
+    let u = loginUser.value, p = loginPwd.value;
+    let find = users.find(x=>x.user===u&&x.pwd===p);
+    if (!find) return alert('账号或密码错误');
+    user = u;
+    authPage.classList.add('hidden');
+    mainPage.classList.remove('hidden');
+    logoutBtn.classList.remove('hidden');
+    renderList();
+    drawChart();
+  }
+
+  // 退出
+  logoutBtn.onclick = () => location.reload();
+
+  // 新增任务
+  function addTask() {
+    let task = {
+      no: no.value,
+      name: name.value,
+      start: start.value,
+      end: end.value,
+      user: user.value,
+      status: status.value,
+      month: (new Date()).toISOString().slice(0,7)
+    };
+    tasks.push(task);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    renderList();
+    drawChart();
+    alert('添加成功');
+  }
+
+  // 渲染列表
+  function renderList() {
+    taskList.innerHTML = '';
+    tasks.forEach(t=>{
+      taskList.innerHTML += `
+      <tr>
+        <td>${t.no}</td>
+        <td>${t.name}</td>
+        <td>${t.start||''}</td>
+        <td>${t.end||''}</td>
+        <td>${t.user}</td>
+        <td>${t.status}</td>
+        <td><button onclick="del(this,${tasks.indexOf(t)})">删除</button></td>
+      </tr>`;
+    });
+  }
+
+  // 删除
+  function del(el,index) {
+    tasks.splice(index,1);
+    localStorage.setItem('tasks',JSON.stringify(tasks));
+    el.parentElement.parentElement.remove();
+    drawChart();
+  }
+
+  // 统计图
+  function drawChart() {
+    let m = month.value || new Date().toISOString().slice(0,7);
+    let list = tasks.filter(t=>t.month===m);
+    let res = {进行中:0,已完成:0,待反馈:0};
+    list.forEach(t=>res[t.status]++);
+    let ctx = chart.getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx,{
+      type:'bar',
+      data:{
+        labels:['进行中','已完成','待反馈'],
+        datasets:[{
+          data:[res.进行中,res.已完成,res.待反馈],
+          backgroundColor:['#f59e0b','#10b981','#3b82f6']
+        }]
+      }
+    });
+  }
+</script>
 </body>
 </html>
