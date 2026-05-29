@@ -77,7 +77,7 @@
       text-align: center;
     }
 
-    /* 登录注册页面 */
+    /* 登录注册页面样式 */
     .page {
       max-width: 420px;
       margin: 60px auto;
@@ -102,6 +102,11 @@
       text-align: center;
       margin-top: 10px;
     }
+    .tips {
+      font-size: 12px;
+      color: #999;
+      margin: 4px 0;
+    }
 
     .hidden {
       display: none !important;
@@ -114,7 +119,6 @@
 </head>
 
 <body>
-
 <div class="container">
   <header>
     <h2>工作任务跟踪记录器</h2>
@@ -126,27 +130,28 @@
 
   <!-- 登录页面 -->
   <div id="loginPage" class="page card active">
-    <h2>登录</h2>
-    <input id="loginUser" placeholder="用户名">
+    <h2>账号登录</h2>
+    <input id="loginPhone" placeholder="请输入手机号" maxlength="11">
     <div class="pwd-box">
-      <input id="loginPwd" type="password" placeholder="密码">
+      <input id="loginPwd" type="password" placeholder="请输入密码">
       <span class="toggle-pwd" onclick="togglePwd('loginPwd')">👁️</span>
     </div>
-    <button class="btn" onclick="login()">登录</button>
+    <button class="btn" onclick="login()">立即登录</button>
     <div class="link" onclick="goPage('findPage')">忘记密码？</div>
-    <div class="link" onclick="goPage('regPage')">去注册账号</div>
+    <div class="link" onclick="goPage('regPage')">没有账号，去注册</div>
   </div>
 
   <!-- 注册页面 -->
   <div id="regPage" class="page card">
-    <h2>注册</h2>
-    <input id="regUser" placeholder="用户名">
+    <h2>账号注册</h2>
+    <input id="regPhone" placeholder="请输入手机号" maxlength="11">
+    <div class="tips">账号将使用当前手机号</div>
     <div class="pwd-box">
-      <input id="regPwd" type="password" placeholder="密码">
+      <input id="regPwd" type="password" placeholder="设置登录密码">
       <span class="toggle-pwd" onclick="togglePwd('regPwd')">👁️</span>
     </div>
     <div class="pwd-box">
-      <input id="regPwd2" type="password" placeholder="确认密码">
+      <input id="regPwd2" type="password" placeholder="再次确认密码">
       <span class="toggle-pwd" onclick="togglePwd('regPwd2')">👁️</span>
     </div>
     <select id="question">
@@ -154,27 +159,27 @@
       <option>你的小学名称是？</option>
       <option>你的母亲姓名是？</option>
     </select>
-    <input id="answer" placeholder="答案">
-    <button class="btn" onclick="register()">注册</button>
-    <div class="link" onclick="goPage('loginPage')">返回登录</div>
+    <input id="answer" placeholder="请输入密保答案">
+    <button class="btn" onclick="register()">完成注册</button>
+    <div class="link" onclick="goPage('loginPage')">已有账号，返回登录</div>
   </div>
 
   <!-- 找回密码 -->
   <div id="findPage" class="page card">
     <h2>找回密码</h2>
-    <input id="findUser" placeholder="用户名">
+    <input id="findPhone" placeholder="请输入注册手机号" maxlength="11">
     <select id="findQuestion">
       <option>你的生日是？</option>
       <option>你的小学名称是？</option>
       <option>你的母亲姓名是？</option>
     </select>
-    <input id="findAnswer" placeholder="答案">
-    <button class="btn" onclick="findPwd()">验证并显示密码</button>
+    <input id="findAnswer" placeholder="请输入密保答案">
+    <button class="btn" onclick="findPwd()">验证找回密码</button>
     <div id="showPwd" class="link" style="color:red;"></div>
     <div class="link" onclick="goPage('loginPage')">返回登录</div>
   </div>
 
-  <!-- 主功能 -->
+  <!-- 主功能页面 -->
   <div id="mainPage" class="hidden">
     <div class="card">
       <h3>新增任务</h3>
@@ -196,7 +201,7 @@
       <table>
         <thead>
           <tr>
-            <th>序号</th><th>任务名称</th><th>开始</th><th>截至</th><th>对接人</th><th>状态</th><th>操作</th>
+            <th>序号</th><th>任务名称</th><th>开始时间</th><th>截至时间</th><th>对接人</th><th>任务状态</th><th>操作</th>
           </tr>
         </thead>
         <tbody id="taskList"></tbody>
@@ -219,89 +224,127 @@
   let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
   let chartInstance = null;
 
+  // 手机号格式校验
+  function checkPhone(phone) {
+    return /^1[3-9]\d{10}$/.test(phone);
+  }
+
   // 切换页面
   function goPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    showPwd.innerText = '';
+    document.getElementById('showPwd').innerText = '';
   }
 
-  // 密码显示隐藏
+  // 密码显示/隐藏切换
   function togglePwd(id) {
-    let i = document.getElementById(id);
-    i.type = i.type === 'password' ? 'text' : 'password';
+    const input = document.getElementById(id);
+    input.type = input.type === 'password' ? 'text' : 'password';
   }
 
-  // 切换主题
-  toggleTheme.onclick = () => document.body.classList.toggle('dark');
+  // 切换深浅主题
+  document.getElementById('toggleTheme').onclick = () => {
+    document.body.classList.toggle('dark');
+  };
 
   // 注册
   function register() {
-    let u = regUser.value.trim();
-    let p = regPwd.value.trim();
-    let p2 = regPwd2.value.trim();
-    let q = question.value;
-    let a = answer.value.trim();
+    const phone = regPhone.value.trim();
+    const pwd = regPwd.value.trim();
+    const pwd2 = regPwd2.value.trim();
+    const q = question.value;
+    const a = answer.value.trim();
 
-    if (!u || !p || !p2 || !a) return alert('请填完所有项');
-    if (p !== p2) return alert('两次密码不一致');
-    if (users.find(x => x.user === u)) return alert('用户名已存在');
+    if (!checkPhone(phone)) {
+      return alert('请输入正确的11位手机号');
+    }
+    if (!pwd || !pwd2 || !a) {
+      return alert('请填写完整所有信息');
+    }
+    if (pwd !== pwd2) {
+      return alert('两次输入的密码不一致');
+    }
+    if (users.find(item => item.phone === phone)) {
+      return alert('该手机号已注册，请直接登录');
+    }
 
-    users.push({ user: u, pwd: p, question: q, answer: a });
+    users.push({
+      phone: phone,
+      pwd: pwd,
+      question: q,
+      answer: a
+    });
     localStorage.setItem('users', JSON.stringify(users));
-    alert('注册成功！');
+    alert('注册成功！请前往登录');
     goPage('loginPage');
   }
 
   // 登录
   function login() {
-    let u = loginUser.value.trim();
-    let p = loginPwd.value.trim();
-    let fu = users.find(x => x.user === u && x.pwd === p);
-    if (!fu) return alert('账号或密码错误');
+    const phone = loginPhone.value.trim();
+    const pwd = loginPwd.value.trim();
 
-    user = u;
-    loginPage.classList.add('hidden');
-    regPage.classList.add('hidden');
-    findPage.classList.add('hidden');
+    if (!checkPhone(phone)) {
+      return alert('请输入正确的11位手机号');
+    }
+    const findUser = users.find(item => item.phone === phone && item.pwd === pwd);
+    if (!findUser) {
+      return alert('手机号或密码错误');
+    }
+
+    user = phone;
+    // 隐藏登录注册找回页，显示主页面
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
     mainPage.classList.remove('hidden');
     logoutBtn.classList.remove('hidden');
     renderList();
     drawChart();
   }
 
-  // 找回密码
+  // 找回密码（手机号 + 密保问题双重验证）
   function findPwd() {
-    let u = findUser.value.trim();
-    let q = findQuestion.value;
-    let a = findAnswer.value.trim();
-    let fu = users.find(x => x.user === u && x.question === q && x.answer === a);
-    if (!fu) return alert('信息不匹配');
-    showPwd.innerText = '你的密码：' + fu.pwd;
+    const phone = findPhone.value.trim();
+    const q = findQuestion.value;
+    const a = findAnswer.value.trim();
+
+    if (!checkPhone(phone)) {
+      return alert('请输入正确的11位手机号');
+    }
+    const findUser = users.find(item => 
+      item.phone === phone && item.question === q && item.answer === a
+    );
+    if (!findUser) {
+      return alert('手机号或密保答案不正确，验证失败');
+      showPwd.innerText = '';
+      return;
+    }
+    showPwd.innerText = `验证通过，您的密码：${findUser.pwd}`;
   }
 
-  // 退出
-  logoutBtn.onclick = () => location.reload();
+  // 退出登录
+  document.getElementById('logoutBtn').onclick = () => {
+    location.reload();
+  };
 
-  // 添加任务
+  // 新增任务
   function addTask() {
-    let task = {
-      no: no.value,
-      name: name.value,
+    const task = {
+      no: no.value.trim(),
+      name: name.value.trim(),
       start: start.value,
       end: end.value,
-      user: user.value,
+      user: user.value.trim(),
       status: status.value,
-      month: new Date().toISOString().slice(0,7)
+      month: new Date().toISOString().slice(0, 7)
     };
     tasks.push(task);
     localStorage.setItem('tasks', JSON.stringify(tasks));
     renderList();
     drawChart();
-    alert('添加成功');
+    alert('任务添加成功');
   }
 
-  // 渲染列表
+  // 渲染任务列表
   function renderList() {
     taskList.innerHTML = '';
     tasks.forEach((t, idx) => {
@@ -318,27 +361,32 @@
     });
   }
 
-  // 删除
+  // 删除任务
   function del(idx) {
-    if (!confirm('确定删除？')) return;
+    if (!confirm('确定要删除该任务吗？')) return;
     tasks.splice(idx, 1);
     localStorage.setItem('tasks', JSON.stringify(tasks));
     renderList();
     drawChart();
   }
 
-  // 图表
+  // 绘制月度统计图表
   function drawChart() {
-    let m = month.value || new Date().toISOString().slice(0,7);
-    let list = tasks.filter(t => t.month === m);
-    let res = { 进行中:0, 已完成:0, 待反馈:0 };
+    const m = month.value || new Date().toISOString().slice(0, 7);
+    const list = tasks.filter(t => t.month === m);
+    const res = { 进行中: 0, 已完成: 0, 待反馈: 0 };
     list.forEach(t => res[t.status]++);
+
     if (chartInstance) chartInstance.destroy();
-    chartInstance = new Chart(chart, {
+    const ctx = document.getElementById('chart').getContext('2d');
+    chartInstance = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: ['进行中','已完成','待反馈'],
-        datasets: [{ data: [res.进行中, res.已完成, res.待反馈], backgroundColor: ['#f59e0b','#10b981','#3b82f6'] }]
+        labels: ['进行中', '已完成', '待反馈'],
+        datasets: [{
+          data: [res.进行中, res.已完成, res.待反馈],
+          backgroundColor: ['#f59e0b', '#10b981', '#3b82f6']
+        }]
       }
     });
   }
