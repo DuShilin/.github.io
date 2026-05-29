@@ -4,8 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Work</title>
+  <!-- 优先加载依赖 -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.umd.min.js"></script>
   <style>
     :root {
       --custom-primary: #409eff;
@@ -41,7 +43,7 @@
       --text: #e5eaf3;
       --text-light: #a8abb2;
       --border: #35363a;
-      --shadow: 0 2px 12px rgba(0,0,0.3);
+      --shadow: 0 2px 12px rgba(0,0,0,0.3);
     }
     * {
       margin: 0;
@@ -227,6 +229,7 @@
     .btn-success { background: var(--success); }
     .btn-danger { background: var(--danger); }
     .btn-warning { background: var(--warning); }
+    .btn-primary { background: var(--primary); }
     .btn-icon {
       padding: 8px;
       width: 32px;
@@ -375,7 +378,7 @@
       object-fit: cover;
     }
     .chart-container {
-      height: 320px;
+      height: 360px;
       margin: 20px 0 10px;
     }
     .setting-row {
@@ -392,6 +395,23 @@
     }
     .setting-row select { width: 200px; }
     #excelImport, #avatarInput { display: none; }
+
+    /* 任务状态文字颜色 */
+    .status-doing{ color:var(--warning); font-weight:bold; }
+    .status-done{ color:var(--success); font-weight:bold; }
+    .status-wait{ color:var(--primary); font-weight:bold; }
+
+    /* 统计顶部信息美化 */
+    .stat-top-info {
+      text-align: center;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+      padding: 12px 0;
+      background: var(--primary-light);
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
   </style>
 </head>
 
@@ -494,7 +514,7 @@
         </div>
         <div id="addTaskForm" class="hidden">
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px;">
-            <input id="taskNo" placeholder="任务序号">
+            <input id="taskNo" placeholder="任务序号" readonly>
             <input id="taskName" placeholder="任务名称">
             <input id="taskStart" type="datetime-local" placeholder="开始时间">
             <input id="taskEnd" type="datetime-local" placeholder="结束时间">
@@ -553,8 +573,11 @@
 
       <div id="chartModule" class="content-module">
         <div class="card">
-          <input type="month" id="month" onchange="drawChart()">
-          <div id="monthTotal" style="text-align:center;margin:10px 0;font-size:16px;font-weight:600;color:var(--primary);"></div>
+          <h3>月度任务数据统计</h3>
+          <input type="month" id="month" onchange="drawChart()" style="max-width:220px;margin-bottom:15px;">
+          <!-- 顶部统计文字区域 -->
+          <div id="monthTotal" class="stat-top-info"></div>
+          <!-- 柱状图容器 -->
           <div class="chart-container">
             <canvas id="chart"></canvas>
           </div>
@@ -567,6 +590,11 @@
           <div class="center-avatar" id="profileAvatar" onclick="document.getElementById('avatarInput').click()">👤</div>
           <input type="file" id="avatarInput" accept="image/*">
           <p style="text-align:center;font-size:12px;color:var(--text-light);margin-bottom:16px;">点击头像更换（建议小尺寸图片）</p>
+        </div>
+        <div class="card">
+          <h3>昵称设置</h3>
+          <input id="nickname" placeholder="请输入昵称">
+          <button class="btn" onclick="saveNickname()">保存昵称</button>
         </div>
         <div class="card">
           <h3>修改手机号</h3>
@@ -587,7 +615,7 @@
           </div>
           <div class="pwd-box">
             <input id="newPwd2" type="password" placeholder="再次确认新密码" onpaste="return false;">
-            <span class="eye" onclick="togglePwd('newPwd2')">👁️</span>
+            <span class="eye" onclick="togglePwd('newP2')">👁️</span>
           </div>
           <button class="btn" onclick="changePwd()">确认修改密码</button>
         </div>
@@ -636,6 +664,7 @@
 
 <script>
 let user = null;
+let editIndex = -1;
 let users = JSON.parse(localStorage.getItem('users')) || [];
 let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 let chartInstance = null;
@@ -644,13 +673,15 @@ let navCollapsed = false;
 let filterCollapsed = true;
 let addTaskCollapsed = true;
 
+// 全局注册标签插件
+Chart.register(ChartDataLabels);
+
 function initPage() {
   toggleBirthHint();
   toggleFindHint();
   autoLoginCheck();
   loadSystemSettings();
   updateThemeToggleIcon();
-  // 绑定头像上传事件（移到JS绑定，更稳定）
   document.getElementById('avatarInput').onchange = uploadAvatar;
 }
 
@@ -670,7 +701,10 @@ function switchModule(moduleId) {
   document.querySelector(`.nav-item[data-module="${moduleId}"]`).classList.add('active');
   const titleMap = {taskModule:'任务管理',chartModule:'统计报表',accountModule:'账户管理',settingModule:'系统设置'};
   document.getElementById('pageTitle').innerText = titleMap[moduleId];
-  if(moduleId === 'chartModule') drawChart();
+  if(moduleId === 'chartModule') {
+    // 切换到统计页强制重绘图表
+    setTimeout(drawChart, 100);
+  }
 }
 
 function toggleNav() {
@@ -702,9 +736,14 @@ function toggleAddTask() {
   const f = document.getElementById('addTaskForm');
   if(addTaskCollapsed){
     f.classList.add('hidden');
+    editIndex = -1;
   }else{
     f.classList.remove('hidden');
-    taskNo.value = taskName.value = taskStart.value = taskEnd.value = taskUser.value = taskFileAddr.value = taskRemark.value = '';
+    if(editIndex === -1){
+      taskNo.value = tasks.length + 1;
+      taskName.value = taskStart.value = taskEnd.value = taskUser.value = taskFileAddr.value = taskRemark.value = '';
+      taskStatus.value = '进行中';
+    }
   }
 }
 
@@ -748,7 +787,7 @@ function register(){
   if(!a){alert('请输入密保答案');return;}
   if(q === '你的生日是？' && !checkBirth(a)){alert('生日格式错误');return;}
   if(users.find(u=>u.phone===phone)){alert('账号已存在');return;}
-  users.push({phone,pwd,question:q,answer:a,avatar:''});
+  users.push({phone,pwd,question:q,answer:a,avatar:'',nickname:''});
   localStorage.setItem('users',JSON.stringify(users));
   alert('注册成功，请登录');
   goAuthPage('loginPage');
@@ -794,12 +833,13 @@ function autoLoginCheck(){
   }
 }
 
-// 【极简稳定版 头像加载】
 function loadUserInfo(u){
-  document.getElementById('headerUsername').innerText = u.phone;
+  const showName = u.nickname || u.phone;
+  document.getElementById('headerUsername').innerText = showName;
+  document.getElementById('nickname').value = u.nickname || '';
+  
   const headAvatar = document.getElementById('headerAvatar');
   const profAvatar = document.getElementById('profileAvatar');
-  // 统一赋值
   if(u.avatar && u.avatar.startsWith('data:image/')){
     headAvatar.innerHTML = '<img src="'+u.avatar+'">';
     profAvatar.innerHTML = '<img src="'+u.avatar+'">';
@@ -810,38 +850,35 @@ function loadUserInfo(u){
   document.getElementById('curPhone').value = u.phone;
 }
 
-// 【核心修复：极简头像上传，无多余判断】
+function saveNickname(){
+  const nick = document.getElementById('nickname').value.trim();
+  if(!nick){alert('请输入昵称');return;}
+  const u = users.find(x=>x.phone===user);
+  if(u){
+    u.nickname = nick;
+    localStorage.setItem('users',JSON.stringify(users));
+    loadUserInfo(u);
+    alert('昵称保存成功');
+  }
+}
+
 function uploadAvatar(e){
   var file = e.target.files[0];
-  if(!file){
-    e.target.value = '';
-    return;
-  }
-  // 限制小图片，避免超长base64
-  if(file.size > 2*1024*1024){
-    alert('图片不能超过2MB，请压缩后重试');
-    e.target.value = '';
-    return;
-  }
+  if(!file){e.target.value='';return;}
+  if(file.size>2*1024*1024){alert('图片不能超过2MB');e.target.value='';return;}
   var reader = new FileReader();
   reader.onload = function(){
     var base64 = reader.result;
-    // 找到当前用户
-    var currUser = users.find(function(item){
-      return item.phone === user;
-    });
+    var currUser = users.find(item=>item.phone===user);
     if(currUser){
       currUser.avatar = base64;
-      localStorage.setItem('users', JSON.stringify(users));
+      localStorage.setItem('users',JSON.stringify(users));
       loadUserInfo(currUser);
       alert('头像上传成功！');
     }
-    e.target.value = '';
+    e.target.value='';
   };
-  reader.onerror = function(){
-    alert('读取图片失败，请更换图片重试');
-    e.target.value = '';
-  };
+  reader.onerror=function(){alert('读取图片失败');e.target.value='';};
   reader.readAsDataURL(file);
 }
 
@@ -862,9 +899,19 @@ function logout(){
   location.reload();
 }
 
+// 自动重排序号
+function resetTaskNo(){
+  tasks.forEach((t,i)=>{
+    t.no = i+1;
+  });
+  originTasks = [...tasks];
+  localStorage.setItem('tasks',JSON.stringify(tasks));
+}
+
+// 新增/修改任务
 function addTask(){
   const task = {
-    no:taskNo.value.trim(),
+    no:Number(taskNo.value),
     name:taskName.value.trim(),
     start:taskStart.value,
     end:taskEnd.value,
@@ -874,27 +921,58 @@ function addTask(){
     remark:taskRemark.value.trim(),
     month:taskStart.value ? taskStart.value.slice(0,7) : new Date().toISOString().slice(0,7)
   };
-  tasks.push(task);
-  originTasks = [...tasks];
-  localStorage.setItem('tasks',JSON.stringify(tasks));
+  if(!task.name){alert('请填写任务名称');return;}
+  
+  if(editIndex === -1){
+    tasks.push(task);
+  }else{
+    tasks[editIndex] = task;
+  }
+  
+  resetTaskNo();
   renderTaskList(tasks);
-  alert('添加成功');
+  alert('保存成功');
   toggleAddTask();
 }
 
+// 编辑任务
+function editTask(i){
+  editIndex = i;
+  const t = tasks[i];
+  taskNo.value = t.no;
+  taskName.value = t.name||'';
+  taskStart.value = t.start||'';
+  taskEnd.value = t.end||'';
+  taskUser.value = t.user||'';
+  taskStatus.value = t.status||'进行中';
+  taskFileAddr.value = t.fileAddr||'';
+  taskRemark.value = t.remark||'';
+  document.getElementById('addTaskForm').classList.remove('hidden');
+  addTaskCollapsed = false;
+}
+
+// 渲染列表（带状态颜色）
 function renderTaskList(list){
   let html = '';
   list.forEach((t,i)=>{
+    let statusClass = '';
+    if(t.status==='进行中') statusClass='status-doing';
+    if(t.status==='已完成') statusClass='status-done';
+    if(t.status==='待反馈') statusClass='status-wait';
+    
     html += `<tr>
       <td>${t.no||''}</td>
       <td>${t.name||''}</td>
       <td>${t.start||''}</td>
       <td>${t.end||''}</td>
       <td>${t.user||''}</td>
-      <td>${t.status||''}</td>
+      <td class="${statusClass}">${t.status||''}</td>
       <td>${t.fileAddr||''}</td>
       <td>${t.remark||''}</td>
-      <td><button class="btn btn-danger" style="padding:4px 8px;font-size:12px" onclick="delTask(${i})">删除</button></td>
+      <td>
+        <button class="btn btn-primary" style="padding:4px 8px;font-size:12px;margin-right:4px" onclick="editTask(${i})">修改</button>
+        <button class="btn btn-danger" style="padding:4px 8px;font-size:12px" onclick="delTask(${i})">删除</button>
+      </td>
     </tr>`;
   });
   document.getElementById('taskList').innerHTML = html;
@@ -903,10 +981,10 @@ function renderTaskList(list){
 function delTask(i){
   if(!confirm('确定删除？'))return;
   tasks.splice(i,1);
-  originTasks = [...tasks];
-  localStorage.setItem('tasks',JSON.stringify(tasks));
+  resetTaskNo();
   renderTaskList(tasks);
 }
+
 function filterTask(){
   const fNo = filterNo.value.trim();
   const fUser = filterUser.value.trim();
@@ -914,7 +992,7 @@ function filterTask(){
   const sB = filterStartBegin.value;
   const sE = filterStartEnd.value;
   let res = originTasks.filter(item=>{
-    if(fNo && !item.no.includes(fNo))return false;
+    if(fNo && item.no!=fNo) return false;
     if(fUser && !item.user.includes(fUser))return false;
     if(fStatus && item.status !== fStatus)return false;
     if(sB && item.start < sB)return false;
@@ -923,20 +1001,27 @@ function filterTask(){
   });
   renderTaskList(res);
 }
+
 function clearFilter(){
   filterNo.value = filterUser.value = filterStartBegin.value = filterStartEnd.value = '';
   filterStatus.value = '';
   renderTaskList(originTasks);
 }
 
+// 绘制柱状图 + 柱子顶部显示数值
 function drawChart(){
   const m = document.getElementById('month').value || new Date().toISOString().slice(0,7);
   const list = tasks.filter(t=>t.month===m);
   const stat = {"进行中":0,"已完成":0,"待反馈":0};
   list.forEach(t=>stat[t.status]++);
   const total = stat.进行中 + stat.已完成 + stat.待反馈;
-  document.getElementById('monthTotal').innerText = `当月总任务数：${total} | 进行中：${stat.进行中} | 已完成：${stat.已完成} | 待反馈：${stat.待反馈}`;
+
+  // 顶部汇总文字
+  document.getElementById('monthTotal').innerText = 
+    `统计月份：${m} ｜ 当月总任务：${total} 条 ｜ 进行中：${stat.进行中} ｜ 已完成：${stat.已完成} ｜ 待反馈：${stat.待反馈}`;
+
   if(chartInstance) chartInstance.destroy();
+
   chartInstance = new Chart(document.getElementById('chart'),{
     type:'bar',
     data:{
@@ -945,13 +1030,22 @@ function drawChart(){
         label:'任务数量',
         data:[stat.进行中,stat.已完成,stat.待反馈],
         backgroundColor:['#e6a23c','#67c23a','#409eff'],
-        borderRadius:6
+        borderRadius:8,
+        barThickness:60
       }]
     },
     options:{
       responsive:true,
       maintainAspectRatio:false,
-      scales:{y:{beginAtZero:true}}
+      plugins:{
+        legend:{ display:false }
+      },
+      scales:{
+        y:{
+          beginAtZero:true,
+          ticks:{ stepSize:1, precision:0 }
+        }
+      }
     }
   });
 }
@@ -1020,14 +1114,13 @@ function importExcel(e){
       const arr = XLSX.utils.sheet_to_json(ws);
       if(arr.length===0){alert('表格为空');return;}
       const imp = arr.map(item=>({
-        no:item['序号']||'',name:item['任务名称']||'',start:item['开始时间']||'',
+        no:item['序号']||tasks.length+1,name:item['任务名称']||'',start:item['开始时间']||'',
         end:item['结束时间']||'',user:item['对接人']||'',status:item['任务状态']||'进行中',
         fileAddr:item['文件位置']||'',remark:item['备注']||'',
         month:item['月份'] || (item['开始时间']?item['开始时间'].slice(0,7):new Date().toISOString().slice(0,7))
       }));
       tasks = tasks.concat(imp);
-      originTasks = [...tasks];
-      localStorage.setItem('tasks',JSON.stringify(tasks));
+      resetTaskNo();
       renderTaskList(tasks);
       alert(`导入${imp.length}条数据`);
     }catch(err){
