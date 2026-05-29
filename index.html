@@ -48,6 +48,7 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      margin-left: 6px;
     }
     .card {
       background: var(--card);
@@ -80,7 +81,7 @@
       margin: 50px auto;
     }
     .hidden {
-      display: none;
+      display: none !important;
     }
     .chart-container {
       height: 300px;
@@ -162,19 +163,22 @@
 
   // 注册
   function register() {
-    let u = regUser.value, p = regPwd.value;
-    if (!u||!p) return alert('请填写完整');
-    if (users.find(x=>x.user===u)) return alert('用户名已存在');
-    users.push({user:pwd:p});
+    let u = regUser.value.trim();
+    let p = regPwd.value.trim();
+    if (!u || !p) return alert('请填写完整信息');
+    if (users.find(x => x.user === u)) return alert('用户名已存在');
+    users.push({ user: u, pwd: p });
     localStorage.setItem('users', JSON.stringify(users));
-    alert('注册成功');
+    alert('注册成功！请登录');
   }
 
   // 登录
   function login() {
-    let u = loginUser.value, p = loginPwd.value;
-    let find = users.find(x=>x.user===u&&x.pwd===p);
-    if (!find) return alert('账号或密码错误');
+    let u = loginUser.value.trim();
+    let p = loginPwd.value.trim();
+    let findUser = users.find(item => item.user === u && item.pwd === p);
+    if (!findUser) return alert('账号或密码错误');
+    
     user = u;
     authPage.classList.add('hidden');
     mainPage.classList.remove('hidden');
@@ -183,8 +187,10 @@
     drawChart();
   }
 
-  // 退出
-  logoutBtn.onclick = () => location.reload();
+  // 退出登录
+  logoutBtn.onclick = () => {
+    location.reload();
+  };
 
   // 新增任务
   function addTask() {
@@ -207,43 +213,44 @@
   // 渲染列表
   function renderList() {
     taskList.innerHTML = '';
-    tasks.forEach(t=>{
+    tasks.forEach((t, idx) => {
       taskList.innerHTML += `
       <tr>
         <td>${t.no}</td>
         <td>${t.name}</td>
-        <td>${t.start||''}</td>
-        <td>${t.end||''}</td>
+        <td>${t.start || ''}</td>
+        <td>${t.end || ''}</td>
         <td>${t.user}</td>
         <td>${t.status}</td>
-        <td><button onclick="del(this,${tasks.indexOf(t)})">删除</button></td>
+        <td><button onclick="del(${idx})">删除</button></td>
       </tr>`;
     });
   }
 
   // 删除
-  function del(el,index) {
-    tasks.splice(index,1);
-    localStorage.setItem('tasks',JSON.stringify(tasks));
-    el.parentElement.parentElement.remove();
+  function del(index) {
+    if (!confirm('确定删除？')) return;
+    tasks.splice(index, 1);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    renderList();
     drawChart();
   }
 
   // 统计图
   function drawChart() {
     let m = month.value || new Date().toISOString().slice(0,7);
-    let list = tasks.filter(t=>t.month===m);
-    let res = {进行中:0,已完成:0,待反馈:0};
-    list.forEach(t=>res[t.status]++);
-    let ctx = chart.getContext('2d');
+    let list = tasks.filter(t => t.month === m);
+    let res = { 进行中: 0, 已完成: 0, 待反馈: 0 };
+    list.forEach(t => res[t.status]++);
+    
     if (chartInstance) chartInstance.destroy();
-    chartInstance = new Chart(ctx,{
-      type:'bar',
-      data:{
-        labels:['进行中','已完成','待反馈'],
-        datasets:[{
-          data:[res.进行中,res.已完成,res.待反馈],
-          backgroundColor:['#f59e0b','#10b981','#3b82f6']
+    chartInstance = new Chart(chart, {
+      type: 'bar',
+      data: {
+        labels: ['进行中', '已完成', '待反馈'],
+        datasets: [{
+          data: [res.进行中, res.已完成, res.待反馈],
+          backgroundColor: ['#f59e0b', '#10b981', '#3b82f6']
         }]
       }
     });
