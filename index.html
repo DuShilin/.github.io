@@ -1,7 +1,96 @@
-<!DOCTYPE html>
-<html>
-<body>
-  <h1>我的第一个网页</h1>
-  <p>Hello GitHub!</p>
-</body>
-</html>
+!DOCTYPE html
+html lang=zh-CN
+head
+    meta charset=UTF-8
+    meta name=viewport content=width=device-width, initial-scale=1.0
+    title线上可访问网页title
+    !-- 在线图标、在线字体（必须联网加载） --
+    link rel=stylesheet href=httpscdn.bootcdn.netajaxlibsfont-awesome6.4.0cssall.min.css
+    style
+         {
+            margin 0;
+            padding 0;
+            box-sizing border-box;
+            font-family Microsoft YaHei, sans-serif;
+        }
+        body {
+            background #f5f7fa;
+        }
+        .header {
+            background #2468eb;
+            color #fff;
+            text-align center;
+            padding 60px 20px;
+        }
+        .header h1 {
+            font-size 36px;
+            margin-bottom 15px;
+        }
+        .header p {
+            font-size 18px;
+            opacity 0.9;
+        }
+        .content {
+            max-width 900px;
+            margin 50px auto;
+            padding 0 20px;
+            background #fff;
+            padding 40px;
+            border-radius 10px;
+            box-shadow 0 2px 15px rgba(0,0,0,0.1);
+        }
+        .content h2 {
+            color #333;
+            margin-bottom 20px;
+        }
+        .content p {
+            line-height 1.8;
+            color #555;
+            font-size 16px;
+        }
+        .link-group {
+            margin-top 30px;
+        }
+        .link-group a {
+            display inline-block;
+            background #2468eb;
+            color #fff;
+            text-decoration none;
+            padding 10px 24px;
+            border-radius 6px;
+            margin 0 8px 10px 0;
+            transition 0.3s;
+        }
+        .link-group ahover {
+            background #1c58d9;
+        }
+        footer {
+            text-align center;
+            padding 30px;
+            color #888;
+            margin-top 40px;
+        }
+    style
+head
+body
+    div class=header
+        h1欢迎访问我的线上网页h1
+        p部署完成后，输入网址即可全局访问p
+    div
+
+    div class=content
+        h2页面介绍h2
+        p这是一套标准静态网页，所有资源均使用在线CDN，部署到互联网后，任何人输入网址都能打开。p
+        p你可以自由修改文字、样式、链接，完全开源无限制。p
+
+        div class=link-group
+            a href=httpswww.baidu.com target=_blank跳转百度a
+            a href=httpsgithub.com target=_blank跳转GitHuba
+        div
+    div
+
+    footer
+        © 2026 线上静态网页  免费托管可用
+    footer
+body
+html
